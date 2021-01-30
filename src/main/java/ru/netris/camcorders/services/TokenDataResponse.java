@@ -6,7 +6,7 @@ package ru.netris.camcorders.services;
  * @author Vitalii Kovalenko
  *
  */
-public class TokenDataResponse {
+public class TokenDataResponse extends CamcorderResponse {
 
     private String value;
     

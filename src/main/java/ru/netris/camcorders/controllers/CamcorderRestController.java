@@ -1,21 +1,24 @@
 package ru.netris.camcorders.controllers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import ru.netris.camcorders.domain.Camcorder;
+import ru.netris.camcorders.services.CamcorderResponse;
 import ru.netris.camcorders.services.CamcorderService;
+import ru.netris.camcorders.services.SourceDataResponse;
+import ru.netris.camcorders.services.TokenDataResponse;
 
 /**
  * Controller
@@ -31,54 +34,45 @@ public class CamcorderRestController {
     @Autowired
     private CamcorderService camcorderService;
 
-    @Value("${camcorders.pool-max-size}")
-    private int poolMaxSize;
+    @Autowired
+    private ExecutorService threadPoolExecutor;
 
     @GetMapping("/")
     public Camcorder[] camcorders() {
-	int completed = 0;
-	int successfully = 0;
-	int failed = 0;
-	Camcorder[] camcorders = camcorderService.fetchList();
+	Camcorder[] camcorders = null;
+	Map<Integer, Camcorder> map = new HashMap<Integer, Camcorder>();
 
-	// The exception has already been thrown and logged
-	if (camcorders == null) {
-	    return null;
-	}
+	try {
+	    camcorders = camcorderService.fetchList();
+	    List<Callable<CamcorderResponse>> tasks = new ArrayList<Callable<CamcorderResponse>>();
 
-	List<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>();
+	    for (Camcorder camcorder : camcorders) {
+		tasks.add(() -> camcorderService.fetchSourceData(camcorder));
+		tasks.add(() -> camcorderService.fetchTokenData(camcorder));
+		map.put(camcorder.getId(), camcorder);
+	    }
 
-	for (Camcorder camcorder : camcorders) {
-	    tasks.add(() -> camcorderService.aggregateCamcorderData(camcorder));
-	    
-	    // Please edit properties if you want to run more threads.
-	    // But there must be a limit to avoid running a billion threads.
-	    if (tasks.size() == poolMaxSize || completed == camcorders.length - 1) {
-		ExecutorService executor = Executors.newFixedThreadPool(tasks.size());
-
+	    for (Future<CamcorderResponse> future : threadPoolExecutor.invokeAll(tasks)) {
 		try {
-		    List<Future<Boolean>> results = executor.invokeAll(tasks);
-
-		    for (Future<Boolean> future : results) {
-			if (future.get().booleanValue()) {
-			    successfully++;
-			} else {
-			    failed++;
-			}
-		    }
+		    CamcorderResponse response = future.get();
+		    Camcorder camcorder = map.get(response.getId());
+		    
+		    if (response instanceof SourceDataResponse) {
+			SourceDataResponse sourceDataResponse = (SourceDataResponse) response;
+			camcorder.setVideoUrl(sourceDataResponse.getVideoUrl());
+			camcorder.setUrlType(sourceDataResponse.getUrlType());
+		    } else if (response instanceof TokenDataResponse) {
+			TokenDataResponse tokenDataResponse = (TokenDataResponse) response;
+			camcorder.setValue(tokenDataResponse.getValue());
+			camcorder.setTtl(tokenDataResponse.getTtl());
+		    } 
 		} catch (Exception e) {
 		    log.error(e);
-		} finally {
-		    executor.shutdown();
 		}
-		
-		tasks.clear();
 	    }
-	    
-	    completed ++;
+	} catch (Exception e) {
+	    log.error(e);
 	}
-
-	log.info("Completed " + completed + ", Successfully " + successfully + ", Failed " + failed);
 
 	return camcorders;
     }

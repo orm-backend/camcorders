@@ -37,8 +37,10 @@ class CamcorderServiceTest {
 	Camcorder[] camcorders = camcorderService.fetchList();
 	assertTrue(camcorders != null);
 	assertTrue(camcorders.length > 0);
-	SourceDataResponse response = camcorderService.fetchSourceData(camcorders[0].getSourceDataUrl());
+	SourceDataResponse response = camcorderService.fetchSourceData(camcorders[0]);
 	assertTrue(response != null);
+	assertTrue(response.getId() != null);
+	assertTrue(response.getId() > 0);
 	assertTrue(response.getUrlType() != null);
 	assertTrue(response.getVideoUrl() != null);
     }
@@ -48,23 +50,12 @@ class CamcorderServiceTest {
 	Camcorder[] camcorders = camcorderService.fetchList();
 	assertTrue(camcorders != null);
 	assertTrue(camcorders.length > 0);
-	TokenDataResponse response = camcorderService.fetchTokenData(camcorders[0].getTokenDataUrl());
+	TokenDataResponse response = camcorderService.fetchTokenData(camcorders[0]);
 	assertTrue(response != null);
+	assertTrue(response.getId() != null);
+	assertTrue(response.getId() > 0);
 	assertTrue(response.getValue() != null);
 	assertTrue(response.getTtl() > 0);
-    }
-
-    @Test
-    void aggregateCamcorderDataTest() {
-	Camcorder[] camcorders = camcorderService.fetchList();
-	assertTrue(camcorders != null);
-	assertTrue(camcorders.length > 0);
-	Camcorder camcorder = camcorders[0];
-	assertTrue(camcorderService.aggregateCamcorderData(camcorder));
-	assertTrue(camcorder.getUrlType() != null);
-	assertTrue(camcorder.getVideoUrl() != null);
-	assertTrue(camcorder.getValue() != null);
-	assertTrue(camcorder.getTtl() > 0);
     }
 
 }

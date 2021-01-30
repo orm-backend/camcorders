@@ -8,8 +8,8 @@ import ru.netris.camcorders.domain.UrlType;
  * @author Vitalii Kovalenko
  *
  */
-public class SourceDataResponse {
-
+public class SourceDataResponse extends CamcorderResponse {
+    
     private UrlType urlType;
     
     private String videoUrl;
