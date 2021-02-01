@@ -103,5 +103,10 @@ public class Camcorder {
 	    return false;
 	return true;
     }
+
+    @Override
+    public String toString() {
+	return "Camcorder [id=" + id + "]";
+    }
     
 }

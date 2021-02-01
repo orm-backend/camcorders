@@ -1,15 +1,15 @@
 package ru.netris.camcorders.config;
 
-import java.time.Duration;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.SpringProperties;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import ru.netris.camcorders.services.CamcorderService;
@@ -22,24 +22,30 @@ import ru.netris.camcorders.services.CamcorderService;
  */
 @Configuration
 public class ApplicationContext {
+    
+    @Value("${camcorders.threads-max:0}")
+    private int threadsMax;
 
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder) {
-	return builder.setConnectTimeout(Duration.ofMillis(3000)).setReadTimeout(Duration.ofMillis(3000)).build();
+    public RestTemplate restTemplate(HttpComponentsClientHttpRequestFactory factory) {
+	return new RestTemplate(factory);
     }
 
     @Bean
     public CamcorderService camcorderService() {
 	return new CamcorderService();
     }
+    
+    @Bean
+    public BlockingQueue<Runnable> taskQueue() {
+	//return new LinkedBlockingQueue<Runnable>();
+	return new SynchronousQueue<Runnable>(true);
+    }
 
     @Bean
     public ExecutorService threadPoolExecutor() {
-	int corePoolSize = Runtime.getRuntime().availableProcessors();
-	String property = SpringProperties.getProperty("camcorders.max-concurrent");
-	int maximumPoolSize = property == null ? Integer.MAX_VALUE : Integer.parseInt(property);
-
-	return new ThreadPoolExecutor(corePoolSize, maximumPoolSize, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+	int nThreads = threadsMax > 0 ? threadsMax : Integer.MAX_VALUE;
+	return new ThreadPoolExecutor(0, nThreads, 60L, TimeUnit.SECONDS, taskQueue());
     }
 
 }

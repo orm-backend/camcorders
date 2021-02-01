@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import ru.netris.camcorders.aspect.LogExecutionTime;
 import ru.netris.camcorders.domain.Camcorder;
 
 /**
@@ -26,6 +27,7 @@ public class CamcorderService {
      * 
      * @return Camcorder[]
      */
+    @LogExecutionTime
     public Camcorder[] fetchList() throws RestClientException {
 	return restTemplate.getForEntity(url, Camcorder[].class).getBody();
     }
@@ -36,6 +38,7 @@ public class CamcorderService {
      * @param sourceDataUrl
      * @return SourceDataResponse
      */
+    @LogExecutionTime
     public SourceDataResponse fetchSourceData(Camcorder camcorder) throws RestClientException {
 	SourceDataResponse response = restTemplate.getForObject(camcorder.getSourceDataUrl(), SourceDataResponse.class);
 	response.setId(camcorder.getId());
@@ -49,6 +52,7 @@ public class CamcorderService {
      * @param tokenDataUrl
      * @return TokenDataResponse
      */
+    @LogExecutionTime
     public TokenDataResponse fetchTokenData(Camcorder camcorder) throws RestClientException {
 	TokenDataResponse response = restTemplate.getForObject(camcorder.getTokenDataUrl(), TokenDataResponse.class);
 	response.setId(camcorder.getId());
