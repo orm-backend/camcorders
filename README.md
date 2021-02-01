@@ -22,15 +22,14 @@
 sudo sysctl -w kern.ipc.somaxconn=4096
 sudo sysctl -w net.inet.tcp.msl=100
 ```
-Установлен JMeter (5.4.1) с настройками
+
+* **Нагрузочный стенд** iMac (macOS Big Sur) с аналогичными настройками. Установлен JMeter (5.4.1):
 
 ```BASH
 httpclient4.retrycount=1
 hc.parameters.file=hc.parameters
 http.connection.stalecheck$Boolean=true
 ```
-
-* **Нагрузочный стенд** iMac (macOS Big Sur) с аналогичными настройками.
 
 * **Роутер** Keenetic Ultra (KN-1810) WiFi 5G на маках и 2.4G на линуксе, не менее 100Mb.
 
@@ -55,6 +54,8 @@ http.connection.stalecheck$Boolean=true
 Среднее время ответа 600 ms. Без ошибок.
 
 * Приложение (1000 одновременных потоков)
+
+![Screenshot](jmeter/1000.png)
 
 Среднее время ответа 1000 ms. Без ошибок.
 
